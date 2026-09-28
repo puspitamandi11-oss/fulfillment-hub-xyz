@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Fulfillment Hub</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#161B22; --ink2:#3A4453; --paper:#EFF1EE; --panel:#FFFFFF; --line:#D9DCD5;
+  --accent:#E8541E; --accent-soft:#FDEAE0;
+  --good:#1E7A4C; --good-soft:#E4F3EA;
+  --warn:#B4780A; --warn-soft:#FBF0DC;
+  --bad:#C23B3B; --bad-soft:#FBE7E7;
+  --s-new:#7A8496; --s-pick:#B4780A; --s-pack:#2D6FB0; --s-stage:#6B4FA0; --s-ship:#1E7A4C;
+  --font-ui:'IBM Plex Sans',system-ui,sans-serif; --font-mono:'IBM Plex Mono',monospace;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){--ink:#EDEFEA;--ink2:#B7BFC9;--paper:#14171C;--panel:#1B1F26;--line:#2B313B;
+    --accent-soft:#3A2013;--good-soft:#12281C;--warn-soft:#2B2109;--bad-soft:#2C1616;}
+}
+:root[data-theme="dark"]{--ink:#EDEFEA;--ink2:#B7BFC9;--paper:#14171C;--panel:#1B1F26;--line:#2B313B;
+  --accent-soft:#3A2013;--good-soft:#12281C;--warn-soft:#2B2109;--bad-soft:#2C1616;}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--paper);color:var(--ink);font-family:var(--font-ui);}
+body{display:flex;min-height:100vh;}
+button{font-family:inherit;cursor:pointer;}
+.mono{font-family:var(--font-mono);}
+/* Sidebar */
+#nav{width:196px;flex:0 0 196px;background:var(--ink);color:#EFF1EE;padding:20px 12px;display:flex;flex-direction:column;gap:4px;position:sticky;top:0;height:100vh;}
+#nav .brand{font-weight:700;font-size:17px;padding:0 10px 18px;letter-spacing:.2px;}
+#nav .brand span{color:var(--accent);}
+#nav button{background:none;border:none;color:#C6CBD3;text-align:left;padding:10px 10px;border-radius:6px;font-size:14px;font-weight:500;display:flex;justify-content:space-between;align-items:center;}
+#nav button:hover{background:#242A33;color:#fff;}
+#nav button.active{background:#242A33;color:#fff;box-shadow:inset 3px 0 0 var(--accent);}
+#nav button .n{font-family:var(--font-mono);font-size:11px;color:#8A93A3;}
+#nav .clock{margin-top:auto;font-size:11px;color:#7A8496;padding:10px;border-top:1px solid #2B313B;font-family:var(--font-mono);}
+/* Main */
+#main{flex:1;min-width:0;padding:26px 32px 60px;overflow-x:auto;}
+h1{font-size:20px;margin:0 0 4px;}
+.sub{color:var(--ink2);font-size:13px;margin:0 0 22px;}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:24px;}
+.kpi{background:var(--panel);border:1px solid var(--line);border-radius:4px;padding:14px 16px;}
+.kpi b{display:block;font-size:26px;font-family:var(--font-mono);}
+.kpi span{font-size:12.5px;color:var(--ink2);}
+.kpi.alert{border-left:3px solid var(--bad);}
+.kpi.warnk{border-left:3px solid var(--warn);}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:4px;margin-bottom:20px;overflow:hidden;}
+.panel h2{font-size:14px;margin:0;padding:12px 16px;border-bottom:1px solid var(--line);font-weight:600;}
+table{width:100%;border-collapse:collapse;font-size:13px;}
+th{text-align:left;font-weight:500;color:var(--ink2);font-size:11.5px;padding:9px 14px;border-bottom:1px solid var(--line);}
+td{padding:10px 14px;border-bottom:1px solid var(--line);vertical-align:middle;}
+tr:last-child td{border-bottom:none;}
+tr.orderrow{border-left:3px solid transparent;}
+.badge{display:inline-block;padding:2px 8px;border-radius:3px;font-size:11.5px;font-weight:600;}
+.b-new{background:#EDEEF0;color:var(--s-new);} .b-pick{background:var(--warn-soft);color:var(--s-pick);}
+.b-pack{background:#E4EDF7;color:var(--s-pack);} .b-stage{background:#EFE9F7;color:var(--s-stage);}
+.b-ship{background:var(--good-soft);color:var(--s-ship);}
+.flag{display:inline-flex;align-items:center;gap:5px;color:var(--accent);font-size:12px;font-weight:600;}
+.flag::before{content:"";width:7px;height:7px;background:var(--accent);display:inline-block;border-radius:1px;}
+.btn{background:var(--ink);color:var(--paper);border:none;border-radius:4px;padding:7px 13px;font-size:12.5px;font-weight:600;}
+.btn.ghost{background:none;border:1px solid var(--line);color:var(--ink);}
+.btn.sm{padding:4px 9px;font-size:11.5px;}
+.btn.danger{background:var(--bad);color:#fff;}
+select,input[type=text]{font-family:inherit;padding:6px 9px;border-radius:4px;border:1px solid var(--line);background:var(--panel);color:var(--ink);font-size:13px;}
+.toolbar{display:flex;gap:8px;padding:12px 16px;border-bottom:1px solid var(--line);flex-wrap:wrap;align-items:center;}
+.pill-issue{font-size:11px;padding:1px 7px;border-radius:9px;background:var(--bad-soft);color:var(--bad);font-weight:600;margin-left:6px;}
+/* Pick & pack */
+.queue{display:flex;flex-direction:column;gap:14px;}
+.pcard{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:16px 18px;border-left:5px solid var(--s-new);}
+.pcard.prio{border-left-color:var(--accent);}
+.pcard .top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;flex-wrap:wrap;gap:8px;}
+.pcard .oid{font-family:var(--font-mono);font-size:16px;font-weight:600;}
+.pcard .meta{font-size:12.5px;color:var(--ink2);margin-top:2px;}
+.item{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-top:1px solid var(--line);}
+.item .nm{font-size:14px;} .item .loc{font-size:11.5px;color:var(--ink2);}
+.item button{padding:9px 16px;font-size:13px;border-radius:5px;}
+.item button.done{background:var(--good-soft);color:var(--good);border:1px solid var(--good);}
+.actionrow{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;}
+.actionrow .btn.big{padding:11px 20px;font-size:14px;}
+.empty{padding:40px;text-align:center;color:var(--ink2);font-size:14px;}
+.stock-low{color:var(--bad);font-weight:600;} .stock-ok{color:var(--good);}
+.drawer-bg{position:fixed;inset:0;background:rgba(0,0,0,.35);display:none;align-items:flex-start;justify-content:flex-end;z-index:50;}
+.drawer-bg.open{display:flex;}
+.drawer{background:var(--panel);width:380px;max-width:92vw;height:100%;padding:22px;overflow-y:auto;}
+.drawer h3{margin-top:0;font-family:var(--font-mono);}
+.close{float:right;background:none;border:none;font-size:18px;cursor:pointer;color:var(--ink2);}
+.field{margin:12px 0;} .field label{display:block;font-size:12px;color:var(--ink2);margin-bottom:4px;}
+@media(max-width:760px){#nav{position:fixed;left:0;bottom:0;top:auto;width:100%;height:auto;flex-direction:row;overflow-x:auto;padding:8px;z-index:40;}
+ #nav .brand,#nav .clock{display:none;} #nav button{flex:0 0 auto;font-size:12px;padding:8px 10px;}
+ #main{padding:16px 14px 90px;} body{display:block;}}
+</style>
+</head>
+<body>
+<nav id="nav">
+  <div class="brand">XYZ <span>Fulfill</span></div>
+  <button data-tab="dash">Dashboard</button>
+  <button data-tab="orders">Orders</button>
+  <button data-tab="pack">Pick &amp; Pack</button>
+  <button data-tab="stock">Inventory</button>
+  <button data-tab="dispatch">Dispatch</button>
+  <button data-tab="issues">Issues <span class="n" id="navIssueCount"></span></button>
+  <div class="clock" id="clock"></div>
+</nav>
+<main id="main"></main>
+<div class="drawer-bg" id="drawerBg" onclick="if(event.target===this)closeDrawer()"><div class="drawer" id="drawer"></div></div>
+
+<script>
+/* ---------- deterministic RNG ---------- */
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+let rng=mulberry32(20260926);
+function ri(a,b){return Math.floor(rng()*(b-a+1))+a;}
+function pick(arr){return arr[Math.floor(rng()*arr.length)];}
+
+const NOW=new Date(); NOW.setHours(13,20,0,0); // demo "current time" mid-shift
+
+const PRODUCTS=[
+ {id:'p1',name:'Trail Runner Sneaker',variants:['Size 8','Size 9','Size 10']},
+ {id:'p2',name:'Insulated Water Bottle',variants:['750ml Black','750ml Sand']},
+ {id:'p3',name:'Canvas Tote Bag',variants:['Natural','Charcoal']},
+ {id:'p4',name:'Wireless Earbuds',variants:['Standard']},
+ {id:'p5',name:'Ceramic Mug Set',variants:['Set of 2']},
+ {id:'p6',name:'Yoga Mat',variants:['4mm Teal','4mm Slate']},
+ {id:'p7',name:'Desk Lamp',variants:['White','Black']},
+ {id:'p8',name:'Rain Jacket',variants:['S','M','L','XL']},
+ {id:'p9',name:'Notebook Set',variants:['A5 Ruled']},
+ {id:'p10',name:'Phone Case',variants:['Clear','Black']},
+];
+const SKUS=[]; PRODUCTS.forEach(p=>p.variants.forEach(v=>SKUS.push({pid:p.id,name:p.name,variant:v,sku:(p.id+'-'+v).replace(/\s+/g,'').toUpperCase()})));
+const COURIERS=[
+ {name:'Swift Express',cutoff:'14:00'},
+ {name:'MetroLogistics',cutoff:'16:30'},
+ {name:'RapidVan',cutoff:'18:30'},
+];
+const STATUSES=['new','picking','packed','staged','shipped'];
+const CHANNELS=['Marketplace A','Marketplace B','Own Site'];
+
+function loadState(){
+  const raw=localStorage.getItem('xyz_fh_state_v1');
+  if(raw){try{return JSON.parse(raw);}catch(e){}}
+  return genState();
+}
+function saveState(){localStorage.setItem('xyz_fh_state_v1',JSON.stringify(S));}
+
+function genState(){
+  const inventory={};
+  SKUS.forEach(s=>{
+    let a=ri(0,40), b=ri(0,25);
+    if(rng()<0.12) a=0; // some genuinely out of stock at main
+    inventory[s.sku]={A:a,B:b};
+  });
+  const orders=[];
+  const issues=[];
+  for(let i=1;i<=68;i++){
+    const id='XY-'+(10230+i);
+    const priority=rng()<0.16;
+    const nItems=ri(1,3);
+    const items=[];
+    for(let k=0;k<nItems;k++){const s=pick(SKUS);items.push({sku:s.sku,name:s.name,variant:s.variant,qty:ri(1,2),picked:false});}
+    const hoursAgo=ri(0,10);
+    const created=new Date(NOW.getTime()-hoursAgo*3600000);
+    let status;
+    const r=rng();
+    if(r<0.30) status='new'; else if(r<0.52) status='picking'; else if(r<0.68) status='packed';
+    else if(r<0.85) status='staged'; else status='shipped';
+    const courier=pick(COURIERS).name;
+    const deadline=new Date(created); deadline.setHours(priority?17:23,0,0,0);
+    const order={id,channel:pick(CHANNELS),priority,items,status,courier,created:created.toISOString(),deadline:deadline.toISOString(),issueIds:[]};
+    if(status!=='new' && status!=='shipped'){ if(rng()<0.6) items.forEach(it=>it.picked=true); else items[0].picked=true; }
+    if(status==='packed'||status==='staged'||status==='shipped') items.forEach(it=>it.picked=true);
+    orders.push(order);
+  }
+  // seed a handful of concrete issues for realism
+  function addIssue(orderId,type,note,status){
+    const iid='IS-'+(1000+issues.length+1);
+    issues.push({id:iid,orderId,type,note,time:new Date(NOW.getTime()-ri(10,300)*60000).toISOString(),status});
+    const o=orders.find(o=>o.id===orderId); if(o) o.issueIds.push(iid);
+  }
+  const staged=orders.filter(o=>o.status==='staged');
+  if(staged[0]) addIssue(staged[0].id,'Missing stock','Item not found on shelf at location A-14, checked twice.','open');
+  const picking=orders.filter(o=>o.status==='picking');
+  if(picking[0]) addIssue(picking[0].id,'Wrong variant','Packer flagged Size 9 pulled instead of Size 10.','open');
+  if(picking[1]) addIssue(picking[1].id,'Missing stock','System shows stock but bin was empty.','resolved');
+  if(staged[1]) addIssue(staged[1].id,'Missed pickup','Courier did not arrive before cutoff window.','open');
+
+  return {inventory,orders,issues,seq:issues.length};
+}
+let S=loadState();
+let TAB='dash';
+
+/* ---------- helpers ---------- */
+function fmtTime(iso){return new Date(iso).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});}
+function statusBadge(s){const map={new:['New','b-new'],picking:['Picking','b-pick'],packed:['Packed','b-pack'],staged:['Staged','b-stage'],shipped:['Shipped','b-ship']};return `<span class="badge ${map[s][1]}">${map[s][0]}</span>`;}
+function openIssuesFor(o){return o.issueIds.map(id=>S.issues.find(x=>x.id===id)).filter(x=>x&&x.status==='open');}
+function isOverdue(o){return o.status!=='shipped' && new Date(o.deadline)<NOW;}
+function totalStock(sku){const inv=S.inventory[sku];return inv.A+inv.B;}
+
+function render(){
+  document.querySelectorAll('#nav button[data-tab]').forEach(b=>b.classList.toggle('active',b.dataset.tab===TAB));
+  const openIssues=S.issues.filter(i=>i.status==='open').length;
+  document.getElementById('navIssueCount').textContent=openIssues?openIssues:'';
+  document.getElementById('clock').textContent='Shift time · '+NOW.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+  const m=document.getElementById('main');
+  if(TAB==='dash')m.innerHTML=renderDash();
+  else if(TAB==='orders')m.innerHTML=renderOrders();
+  else if(TAB==='pack')m.innerHTML=renderPack();
+  else if(TAB==='stock')m.innerHTML=renderStock();
+  else if(TAB==='dispatch')m.innerHTML=renderDispatch();
+  else if(TAB==='issues')m.innerHTML=renderIssues();
+}
+
+/* ---------- DASHBOARD ---------- */
+function renderDash(){
+  const orders=S.orders;
+  const dueToday=orders.filter(o=>o.status!=='shipped');
+  const priorityAtRisk=orders.filter(o=>o.priority && o.status!=='shipped' && (isOverdue(o)|| (new Date(o.deadline)-NOW)<2*3600000));
+  const openIssues=S.issues.filter(i=>i.status==='open');
+  const awaitingPickup=orders.filter(o=>o.status==='staged');
+  const outOfStock=SKUS.filter(s=>S.inventory[s.sku].A===0).length;
+  const kpis=[
+    ['Open orders',dueToday.length,''],
+    ['Priority at risk',priorityAtRisk.length,priorityAtRisk.length?'alert':''],
+    ['Open issues',openIssues.length,openIssues.length?'warnk':''],
+    ['Awaiting pickup',awaitingPickup.length,''],
+    ['Zero-stock SKUs (Wh A)',outOfStock,outOfStock?'warnk':''],
+  ];
+  return `<h1>Dashboard</h1><p class="sub">Today's fulfillment status at a glance · ${orders.filter(o=>o.status==='shipped').length} shipped so far</p>
+  <div class="kpis">${kpis.map(k=>`<div class="kpi ${k[2]}"><b>${k[1]}</b><span>${k[0]}</span></div>`).join('')}</div>
+  <div class="panel"><h2>Priority orders at risk</h2>
+  ${priorityAtRisk.length?`<table><thead><tr><th>Order</th><th>Channel</th><th>Deadline</th><th>Status</th><th></th></tr></thead><tbody>
+  ${priorityAtRisk.map(o=>`<tr><td class="mono">${o.id}</td><td>${o.channel}</td><td class="${isOverdue(o)?'stock-low':''}">${fmtTime(o.deadline)}${isOverdue(o)?' · overdue':''}</td><td>${statusBadge(o.status)}</td><td><button class="btn sm ghost" onclick="openOrder('${o.id}')">View</button></td></tr>`).join('')}
+  </tbody></table>`:`<div class="empty">No priority orders currently at risk.</div>`}</div>
+  <div class="panel"><h2>Recent issues</h2>
+  ${openIssues.length?`<table><thead><tr><th>Order</th><th>Type</th><th>Note</th><th>Raised</th></tr></thead><tbody>
+  ${openIssues.slice(0,6).map(i=>`<tr><td class="mono">${i.orderId}</td><td>${i.type}</td><td>${i.note}</td><td>${fmtTime(i.time)}</td></tr>`).join('')}
+  </tbody></table>`:`<div class="empty">Nothing outstanding.</div>`}</div>`;
+}
+
+/* ---------- ORDERS (office) ---------- */
+let orderFilter={status:'all',priorityOnly:false};
+function renderOrders(){
+  let list=S.orders.slice().sort((a,b)=>new Date(a.deadline)-new Date(b.deadline));
+  if(orderFilter.status!=='all') list=list.filter(o=>o.status===orderFilter.status);
+  if(orderFilter.priorityOnly) list=list.filter(o=>o.priority);
+  return `<h1>Orders</h1><p class="sub">${S.orders.length} orders today · office review &amp; courier assignment</p>
+  <div class="panel">
+  <div class="toolbar">
+    <select onchange="orderFilter.status=this.value;render()">
+      <option value="all">All statuses</option>
+      ${STATUSES.map(s=>`<option value="${s}" ${orderFilter.status===s?'selected':''}>${s}</option>`).join('')}
+    </select>
+    <label style="font-size:13px;display:flex;align-items:center;gap:6px;"><input type="checkbox" ${orderFilter.priorityOnly?'checked':''} onchange="orderFilter.priorityOnly=this.checked;render()"> Priority only</label>
+  </div>
+  <table><thead><tr><th>Order</th><th>Channel</th><th>Items</th><th>Priority</th><th>Deadline</th><th>Courier</th><th>Status</th><th></th></tr></thead><tbody>
+  ${list.map(o=>{const oi=openIssuesFor(o);return `<tr class="orderrow" style="border-left-color:var(--s-${o.status==='new'?'new':o.status==='picking'?'pick':o.status==='packed'?'pack':o.status==='staged'?'stage':'ship'})">
+    <td class="mono">${o.id}${oi.length?`<span class="pill-issue">issue</span>`:''}</td>
+    <td>${o.channel}</td><td>${o.items.length}</td>
+    <td>${o.priority?'<span class="flag">Priority</span>':'—'}</td>
+    <td class="${isOverdue(o)?'stock-low':''}">${fmtTime(o.deadline)}</td>
+    <td>${o.courier}</td><td>${statusBadge(o.status)}</td>
+    <td><button class="btn sm ghost" onclick="openOrder('${o.id}')">View</button></td></tr>`;}).join('')}
+  </tbody></table></div>`;
+}
+function openOrder(id){
+  const o=S.orders.find(x=>x.id===id); if(!o)return;
+  const oi=o.issueIds.map(iid=>S.issues.find(x=>x.id===iid)).filter(Boolean);
+  document.getElementById('drawer').innerHTML=`<button class="close" onclick="closeDrawer()">&times;</button>
+  <h3>${o.id}</h3>
+  <p class="sub" style="margin-bottom:2px;">${o.channel} · placed ${fmtTime(o.created)}</p>
+  ${o.priority?'<p class="flag" style="margin:4px 0 14px;">Priority — ship by '+fmtTime(o.deadline)+'</p>':`<p class="sub">Ship by ${fmtTime(o.deadline)}</p>`}
+  <div class="field"><label>Status</label>${statusBadge(o.status)}</div>
+  <div class="field"><label>Courier</label>
+  <select onchange="setCourier('${o.id}',this.value)">${COURIERS.map(c=>`<option ${c.name===o.courier?'selected':''}>${c.name}</option>`).join('')}</select></div>
+  <div class="field"><label>Items</label>
+  ${o.items.map(it=>`<div style="font-size:13px;padding:5px 0;border-bottom:1px solid var(--line);">${it.qty}× ${it.name} — ${it.variant} ${it.picked?'<span style="color:var(--good)">✓ picked</span>':''}</div>`).join('')}
+  </div>
+  ${oi.length?`<div class="field"><label>Issues on this order</label>${oi.map(i=>`<div style="font-size:13px;padding:8px;background:var(--bad-soft);border-radius:4px;margin-bottom:6px;"><b>${i.type}</b> — ${i.note} <span style="color:var(--ink2)">(${i.status})</span></div>`).join('')}</div>`:''}
+  <div class="field"><button class="btn ghost" onclick="flagIssuePrompt('${o.id}')">Flag an issue</button></div>`;
+  document.getElementById('drawerBg').classList.add('open');
+}
+function closeDrawer(){document.getElementById('drawerBg').classList.remove('open');}
+function setCourier(id,name){const o=S.orders.find(x=>x.id===id);o.courier=name;saveState();render();openOrder(id);}
+
+/* ---------- PICK & PACK (warehouse) ---------- */
+function renderPack(){
+  let q=S.orders.filter(o=>o.status==='new'||o.status==='picking'||o.status==='packed');
+  q.sort((a,b)=>(b.priority-a.priority)||(new Date(a.deadline)-new Date(b.deadline)));
+  return `<h1>Pick &amp; Pack</h1><p class="sub">Work orders top to bottom. Priority orders are marked and sorted first.</p>
+  <div class="queue">
+  ${q.length?q.map(o=>{
+    const allPicked=o.items.every(it=>it.picked);
+    const oi=openIssuesFor(o);
+    return `<div class="pcard ${o.priority?'prio':''}">
+    <div class="top"><div><div class="oid">${o.id} ${o.priority?'<span class="flag">Priority</span>':''}</div>
+    <div class="meta">${o.channel} · ship by ${fmtTime(o.deadline)} via ${o.courier}${oi.length?' · <span style="color:var(--bad);font-weight:600;">has open issue</span>':''}</div></div>
+    ${statusBadge(o.status)}</div>
+    ${o.items.map((it,idx)=>`<div class="item"><div><div class="nm">${it.qty}× ${it.name} — <b>${it.variant}</b></div><div class="loc">Bin ${it.picked?'confirmed':(S.inventory[it.sku].A>0?'Warehouse A':'not at A — check Warehouse B')}</div></div>
+    <button class="${it.picked?'done':'btn'}" onclick="toggleItem('${o.id}',${idx})">${it.picked?'✓ Picked':'Confirm item'}</button></div>`).join('')}
+    <div class="actionrow">
+    ${o.status!=='packed'?`<button class="btn big" ${allPicked?'':'disabled style="opacity:.4"'} onclick="markPacked('${o.id}')">Mark all packed</button>`:`<button class="btn big" disabled style="opacity:.5">Packed — ready to stage</button>`}
+    <button class="btn ghost" onclick="flagIssuePrompt('${o.id}')">Flag a problem</button>
+    </div></div>`;}).join(''):'<div class="empty">Queue is clear — nothing waiting to be picked or packed.</div>'}
+  </div>`;
+}
+function toggleItem(oid,idx){const o=S.orders.find(x=>x.id===oid);o.items[idx].picked=!o.items[idx].picked;
+  if(o.status==='new'&&o.items.some(i=>i.picked))o.status='picking';
+  saveState();render();}
+function markPacked(oid){const o=S.orders.find(x=>x.id===oid); if(!o.items.every(i=>i.picked))return;
+  o.status='packed';saveState();render();}
+
+/* ---------- INVENTORY ---------- */
+function renderStock(){
+  return `<h1>Inventory</h1><p class="sub">Orders only ship from Warehouse A. Transfer stock in from Warehouse B before it's needed.</p>
+  <div class="panel"><table><thead><tr><th>Product</th><th>Variant</th><th>Warehouse A</th><th>Warehouse B</th><th></th></tr></thead><tbody>
+  ${SKUS.map(s=>{const inv=S.inventory[s.sku];const low=inv.A===0;return `<tr>
+    <td>${s.name}</td><td>${s.variant}</td>
+    <td class="${low?'stock-low':(inv.A<5?'stock-low':'stock-ok')}">${inv.A}${low?' · out of stock':''}</td>
+    <td>${inv.B}</td>
+    <td>${low&&inv.B>0?`<button class="btn sm" onclick="transferStock('${s.sku}')">Transfer from B</button>`:(low?'<span class="pill-issue">none at B either</span>':'')}</td></tr>`;}).join('')}
+  </tbody></table></div>`;
+}
+function transferStock(sku){const inv=S.inventory[sku];const move=Math.min(10,inv.B);inv.B-=move;inv.A+=move;saveState();render();}
+
+/* ---------- DISPATCH ---------- */
+function renderDispatch(){
+  const staged=S.orders.filter(o=>o.status==='staged');
+  return `<h1>Dispatch</h1><p class="sub">Boxes staged and waiting for courier pickup.</p>
+  <div class="panel"><table><thead><tr><th>Order</th><th>Courier</th><th>Cutoff</th><th>Status</th><th></th></tr></thead><tbody>
+  ${staged.length?staged.map(o=>{const c=COURIERS.find(c=>c.name===o.courier);const cutoffToday=new Date(NOW);const[h,m]=c.cutoff.split(':');cutoffToday.setHours(+h,+m,0,0);const missed=NOW>cutoffToday;
+    return `<tr><td class="mono">${o.id}${o.priority?' <span class="flag">Priority</span>':''}</td><td>${o.courier}</td><td class="${missed?'stock-low':''}">${c.cutoff}${missed?' · missed':''}</td>
+    <td>${missed?'<span class="pill-issue">missed pickup</span>':statusBadge('staged')}</td>
+    <td><button class="btn sm" onclick="markShipped('${o.id}')">Mark picked up</button> ${missed?`<button class="btn sm ghost" onclick="flagIssuePrompt('${o.id}','Missed pickup')">Flag</button>`:''}</td></tr>`;}).join(''):`<tr><td colspan="5"><div class="empty">Nothing staged right now.</div></td></tr>`}
+  </tbody></table></div>`;
+}
+function markShipped(oid){const o=S.orders.find(x=>x.id===oid);o.status='shipped';saveState();render();}
+
+/* ---------- ISSUES ---------- */
+function renderIssues(){
+  const list=S.issues.slice().sort((a,b)=>(a.status==='open'?0:1)-(b.status==='open'?0:1)||new Date(b.time)-new Date(a.time));
+  return `<h1>Issues</h1><p class="sub">Every flagged problem in one place, so nothing gets handled informally and forgotten.</p>
+  <div class="panel"><table><thead><tr><th>Order</th><th>Type</th><th>Note</th><th>Raised</th><th>Status</th><th></th></tr></thead><tbody>
+  ${list.length?list.map(i=>`<tr><td class="mono">${i.orderId}</td><td>${i.type}</td><td>${i.note}</td><td>${fmtTime(i.time)}</td>
+    <td>${i.status==='open'?'<span class="pill-issue">open</span>':'<span class="badge b-ship">resolved</span>'}</td>
+    <td>${i.status==='open'?`<button class="btn sm ghost" onclick="resolveIssue('${i.id}')">Resolve</button>`:''}</td></tr>`).join(''):`<tr><td colspan="6"><div class="empty">No issues logged.</div></td></tr>`}
+  </tbody></table></div>`;
+}
+function resolveIssue(id){const i=S.issues.find(x=>x.id===id);i.status='resolved';saveState();render();}
+function flagIssuePrompt(oid,presetType){
+  const type=presetType||prompt('Issue type (e.g. Missing stock, Wrong variant, Damaged item, Other):','Missing stock');
+  if(!type)return;
+  const note=prompt('Short note for the office team:','')||'';
+  const iid='IS-'+(1000+ ++S.seq);
+  S.issues.push({id:iid,orderId:oid,type,note,time:new Date().toISOString(),status:'open'});
+  const o=S.orders.find(x=>x.id===oid); o.issueIds.push(iid);
+  saveState();closeDrawer();render();
+}
+
+document.querySelectorAll('#nav button[data-tab]').forEach(b=>b.onclick=()=>{TAB=b.dataset.tab;render();});
+render();
+</script>
+</body>
+</html>
